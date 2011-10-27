@@ -7,7 +7,7 @@ with open('README') as f:
 
 setup(
     name='crontab',
-    version='.1',
+    version='.11',
     description='Parse and use crontab schedules in Python',
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',
@@ -15,10 +15,9 @@ setup(
     packages=['crontab', 'tests'],
     classifiers=[
         'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
         'Programming Language :: Python',
     ],
-    license='GNU GPL v2.0',
+    license='GNU LGPL v2.1',
     long_description=long_description,
-    data_files=['Makefile'],
 )

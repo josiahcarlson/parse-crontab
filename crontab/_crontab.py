@@ -3,8 +3,8 @@
 crontab.py
 
 Written July 15, 2011 by Josiah Carlson
-Released under the GNU GPL v2
-available: http://www.gnu.org/licenses/gpl-2.0.html
+Released under the GNU LGPL v2.1
+available: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 
 Other licenses may be available upon request.
 
@@ -226,6 +226,8 @@ class CronTab(object):
         executed.
         '''
         now = now or datetime.datetime.now()
+        if isinstance(now, (int, long, float)):
+            now = datetime.datetime.fromtimestamp(now)
         # get a reasonable future start time
         future = now.replace(second=0, microsecond=0) + datetime.timedelta(minutes=1)
         to_test = 0
