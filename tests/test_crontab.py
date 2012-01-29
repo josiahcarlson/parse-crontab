@@ -11,6 +11,12 @@ class TestCrontab(unittest.TestCase):
         assert delay is not None
         dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
         assert delay <= max_delay, dd
+        if not crontab.endswith(' 2099'):
+            delay2 = ct.previous(now + datetime.timedelta(seconds=delay))
+            dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
+            assert abs(delay2) >= delay, (delay, delay2)
+            pt = now + datetime.timedelta(seconds=delay) + datetime.timedelta(seconds=delay2)
+            assert pt <= now, dd
 
     def _run_impossible(self, crontab, now):
         ct = CronTab(crontab)
