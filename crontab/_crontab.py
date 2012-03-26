@@ -51,14 +51,11 @@ MONTH = datetime.timedelta(days=28)
 YEAR = datetime.timedelta(days=365)
 
 # find the next scheduled time
-def _day_incr(dt, m):
-    if m.day.input != 'l':
-        return DAY
-    odt = dt
-    ndt = dt = dt + DAY
+def _end_of_month(dt):
+    ndt = dt + DAY
     while dt.month == ndt.month:
         dt += DAY
-    return dt - odt
+    return ndt.replace(day=1) - DAY
 
 def _month_incr(dt, m):
     odt = dt
@@ -81,7 +78,7 @@ def _year_incr(dt, m):
 _increments = [
     lambda *a: MINUTE,
     lambda *a: HOUR,
-    _day_incr,
+    lambda *a: DAY,
     _month_incr,
     lambda *a: DAY,
     _year_incr,
@@ -138,7 +135,7 @@ class _Matcher(object):
         self.any = self.allowed is None
     def __call__(self, v, dt):
         if self.input == 'l':
-            return v != (dt + DAY).month
+            return v == _end_of_month(dt).day
         elif self.input.startswith('l'):
             okay = dt.month != (dt + WEEK).month
             return okay and (self.any or v in self.allowed)

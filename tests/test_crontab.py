@@ -4,13 +4,15 @@ import unittest
 from crontab import CronTab
 
 class TestCrontab(unittest.TestCase):
-    def _run_test(self, crontab, max_delay, now=None):
+    def _run_test(self, crontab, max_delay, now=None, min_delay=None):
         ct = CronTab(crontab)
         now = now or datetime.datetime.now()
         delay = ct.next(now)
         assert delay is not None
         dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
         assert delay <= max_delay, dd
+        if min_delay is not None:
+            assert delay >= min_delay, dd
         if not crontab.endswith(' 2099'):
             delay2 = ct.previous(now + datetime.timedelta(seconds=delay))
             dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
@@ -80,6 +82,7 @@ class TestCrontab(unittest.TestCase):
         self._run_test('0 0 ? 7 L0-1', 24*86400, datetime.datetime(2011, 7, 1))
         self._run_test('0 0 ? 7 L0-1', 86400, datetime.datetime(2011, 7, 24))
         self._run_test('0 0 ? 7 L0-1', 6*86400, datetime.datetime(2011, 7, 25))
+        self._run_test('59 23 L 12 *', 282*86400, datetime.datetime(2012, 3, 25), 280*84400)
 
     def test_impossible(self):
         self._run_impossible('0 0 * 7 fri 2011', datetime.datetime(2011, 7, 31))
