@@ -7,7 +7,7 @@ with open('README') as f:
 
 setup(
     name='crontab',
-    version='.13',
+    version='.14',
     description='Parse and use crontab schedules in Python',
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',

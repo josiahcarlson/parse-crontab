@@ -38,7 +38,7 @@ class TestCrontab(unittest.TestCase):
         self._run_test('0 0 ? * 0-6', 86400)
         self._run_test('0 0 31 * *', 62*86400, datetime.datetime(2011, 1, 31))
         self._run_test('0,1/2 * * * *', 60, datetime.datetime(2011, 1, 1, 1, 0))
-        self._run_test('0,1/2 * * * *', 60, datetime.datetime(2011, 1, 1, 1, 1))
+        self._run_test('0,1/2 * * * *', 120, datetime.datetime(2011, 1, 1, 1, 1))
         self._run_test('0,1/2 * * * *', 60, datetime.datetime(2011, 1, 1, 1, 2))
         self._run_test('0-6,50-59/2 * * * *', 60, datetime.datetime(2011, 1, 1, 1, 1))
         self._run_test('0-6,50-59/2 * * * *', 120, datetime.datetime(2011, 1, 1, 1, 2))
@@ -63,6 +63,8 @@ class TestCrontab(unittest.TestCase):
 
     def test_last_day(self):
         self._run_test('0 0 L 2 ?', 28*86400, datetime.datetime(2011, 1, 31))
+        self._run_test('0 0 1,L 2 ?', 86400, datetime.datetime(2011, 1, 31))
+        self._run_test('0 0 2,L 2 ?', 2*86400, datetime.datetime(2011, 1, 31))
         self._run_test('0 0 L 2 ?', 58*86400, datetime.datetime(2011, 1, 1))
         self._run_test('0 0 ? 2 L1', 58*86400, datetime.datetime(2011, 1, 31))
         self._run_test('0 0 ? 7 L1', 1*86400, datetime.datetime(2011, 7, 24))
@@ -105,6 +107,7 @@ class TestCrontab(unittest.TestCase):
         self.assertRaises(ValueError, lambda: CronTab('* * * L *'))
         self.assertRaises(ValueError, lambda: CronTab('* L * * *'))
         self.assertRaises(ValueError, lambda: CronTab('L * * * *'))
+        self.assertRaises(ValueError, lambda: CronTab('* 1, * * *'))
 
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestCrontab)

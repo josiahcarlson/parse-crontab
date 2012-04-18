@@ -125,20 +125,32 @@ def _assert(condition, message, *args):
         raise ValueError(message%args)
 
 class _Matcher(object):
-    __slots__ = 'allowed', 'end', 'any', 'input', 'which'
+    __slots__ = 'allowed', 'end', 'any', 'input', 'which', 'split'
     def __init__(self, which, entry):
         _assert(0 <= which <= 5,
             "improper number of cron entries specified")
         self.input = entry.lower()
+        self.split = self.input.split(',')
         self.which = which
-        self.allowed, self.end = self._parse_crontab(which, entry.lower())
-        self.any = self.allowed is None
+        self.allowed = set()
+        self.end = None
+        self.any = '*' in self.split or '?' in self.split
+        for it in self.split:
+            al, en = self._parse_crontab(which, it)
+            if al is not None:
+                self.allowed.update(al)
+            self.end = en
+        _assert(self.end is not None,
+            "improper item specification: %r", entry.lower()
+        )
     def __call__(self, v, dt):
-        if self.input == 'l':
-            return v == _end_of_month(dt).day
-        elif self.input.startswith('l'):
+        if 'l' in self.split:
+            if v == _end_of_month(dt).day:
+                return True
+        elif any(x.startswith('l') for x in self.split):
             okay = dt.month != (dt + WEEK).month
-            return okay and (self.any or v in self.allowed)
+            if okay and (self.any or v in self.allowed):
+                return True
         return self.any or v in self.allowed
     def __lt__(self, other):
         if self.any:
