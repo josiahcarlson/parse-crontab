@@ -12,6 +12,7 @@ Other licenses may be available upon request.
 
 from collections import namedtuple
 import datetime
+import sys
 
 _ranges = [
     (0, 59),
@@ -42,6 +43,12 @@ _aliases = {
     '@daily':   '0 0 * * *',
     '@hourly':  '0 * * * *',
 }
+
+if sys.version_info >= (3, 0):
+    _number_types = (int, float)
+    xrange = range
+else:
+    _number_types = (int, long, float)
 
 MINUTE = datetime.timedelta(minutes=1)
 HOUR = datetime.timedelta(hours=1)
@@ -274,7 +281,7 @@ class CronTab(object):
         executed.
         '''
         now = now or datetime.datetime.now()
-        if isinstance(now, (int, long, float)):
+        if isinstance(now, _number_types):
             now = datetime.datetime.fromtimestamp(now)
         # get a reasonable future/past start time
         future = now.replace(second=0, microsecond=0) + increments[0]()
