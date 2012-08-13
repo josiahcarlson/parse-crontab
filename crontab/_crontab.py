@@ -12,6 +12,7 @@ Other licenses may be available upon request.
 
 from collections import namedtuple
 import datetime
+import sys
 
 _ranges = [
     (0, 59),
@@ -42,6 +43,12 @@ _aliases = {
     '@daily':   '0 0 * * *',
     '@hourly':  '0 * * * *',
 }
+
+if sys.version_info >= (3, 0):
+    _number_types = (int, float)
+    xrange = range
+else:
+    _number_types = (int, long, float)
 
 MINUTE = datetime.timedelta(minutes=1)
 HOUR = datetime.timedelta(hours=1)
@@ -188,15 +195,18 @@ class _Matcher(object):
                 end = _end
                 if increment is None:
                     return set([start])
-            _assert(_start <= start <= _end,
-                "range start value %r out of range [%r, %r]", start, _start, _end)
-            _assert(_start <= end <= _end,
-                "range end value %r out of range [%r, %r]", end, _start, _end)
+            _assert(_start <= start <= _end_limit,
+                "range start value %r out of range [%r, %r]",
+                start, _start, _end_limit)
+            _assert(_start <= end <= _end_limit,
+                "range end value %r out of range [%r, %r]",
+                end, _start, _end_limit)
             _assert(start <= end,
                 "range start value %r > end value %r", start, end)
             return set(range(start, end+1, increment or 1))
 
         _start, _end = _ranges[which]
+        _end_limit = _end
         # wildcards
         if entry in ('*', '?'):
             if entry == '?':
@@ -225,10 +235,19 @@ class _Matcher(object):
                 "you can only use positive increment values, you provided %r",
                 increment)
 
+        # allow Sunday to be specified as weekday 7
+        if which == 4:
+            _end_limit = 7
+
         # handle all of the a,b,c and x-y,a,b entries
         good = set()
         for it in entry.split(','):
             good.update(_parse_piece(it))
+
+        # change Sunday to weekday 0
+        if which == 4 and 7 in good:
+            good.discard(7)
+            good.add(0)
 
         return good, _end
 
@@ -274,7 +293,7 @@ class CronTab(object):
         executed.
         '''
         now = now or datetime.datetime.now()
-        if isinstance(now, (int, long, float)):
+        if isinstance(now, _number_types):
             now = datetime.datetime.fromtimestamp(now)
         # get a reasonable future/past start time
         future = now.replace(second=0, microsecond=0) + increments[0]()
