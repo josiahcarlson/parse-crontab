@@ -287,7 +287,7 @@ class CronTab(object):
             attr = attr() % 7
         return self.matchers[index](attr, dt)
 
-    def next(self, now=None, increments=_increments):
+    def _next(self, now=None, increments=_increments, going_forward=None):
         '''
         How long to wait in seconds before this crontab entry can next be
         executed.
@@ -309,7 +309,7 @@ class CronTab(object):
             while not self._test_match(to_test, future):
                 future += incr(future, self.matchers)
                 if _test():
-                    return None
+                    return now, None
             # check for backtrack conditions
             if to_test >= 3:
                 for tt in xrange(2, to_test):
@@ -326,8 +326,55 @@ class CronTab(object):
             "author with the following information:\n" \
             "crontab: %r\n" \
             "now: %r", ' '.join(m.input for m in self.matchers), now)
-        delay = future - now
-        return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
+        return now, future
 
-    def previous(self, now=None):
-        return self.next(now, _decrements)
+    def compute_return(self, now, future, return_delay):
+        if not future:
+          if return_delay:
+            return None
+          else:
+            return now
+        else:
+          if return_delay:
+            delay = future - now
+            return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
+          else:
+            return future
+
+    def next(self, now=None, return_delay=True, closest=False):
+        going_forward = True
+        now, future = self._next(now, _increments, going_forward)
+        if future:
+          if closest:
+            new_future = future
+            while new_future > now:
+                future = new_future
+                new_now, new_future = self._next(future, _decrements, going_forward)
+                if not new_future:
+                    break
+
+        return self.compute_return(now, future, return_delay)
+
+    def previous(self, now=None, return_delay=True, closest=False):
+        going_forward = False
+        now, past = self._next(now, _decrements, going_forward)
+        if past:
+          if closest:
+            new_past = past
+            while now > new_past:
+                past = new_past
+                new_now, new_past = self._next(past, _increments, going_forward)
+                if not new_past:
+                    break
+
+        return self.compute_return(now, past, return_delay)
+
+    # added to the module that was downloaded for our use
+    def matches(self, now=None):
+        now = now or datetime.datetime.now()
+        if isinstance(now, _number_types):
+            now = datetime.datetime.fromtimestamp(now)
+        # get a reasonable future/past start time
+        future = now.replace(second=0, microsecond=0)
+        match = [self._test_match(i, future) for i in xrange(6)]
+        return all(match)

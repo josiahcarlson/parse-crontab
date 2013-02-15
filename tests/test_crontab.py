@@ -25,6 +25,27 @@ class TestCrontab(unittest.TestCase):
         delay = ct.next(now)
         assert delay is None, (crontab, delay, now, now+datetime.timedelta(seconds=delay))
 
+    def test_closest(self):
+        ce = CronTab("*/15 10-15 * * 1-5")
+        t945 = datetime.datetime(2013, 1, 1, 9, 45) # tuesday
+        t1245 = datetime.datetime(2013, 1, 1, 12, 45) # tuesday
+        s1245 = datetime.datetime(2013, 1, 5, 12, 45) # saturday
+
+        assert False == ce.matches(t945)
+        assert False == ce.matches(s1245)
+        assert True == ce.matches(t1245)
+
+
+        n = ce.next(t945, False, True)
+        assert n == datetime.datetime(2013, 1, 1, 10, 0)
+        p = ce.previous(t945, False, True)
+        assert p == datetime.datetime(2012, 12, 31, 15, 45)
+
+        n = ce.next(s1245, False, True)
+        assert n == datetime.datetime(2013, 1, 7, 10, 0)
+        p = ce.previous(s1245, False, True)
+        assert p == datetime.datetime(2013, 1, 4, 15, 45)
+
     def test_normal(self):
         self._run_test('* * * * *', 60)
         self._run_test('0 * * * *', 3600)
