@@ -1,4 +1,3 @@
-
 '''
 crontab.py
 
@@ -11,8 +10,10 @@ Other licenses may be available upon request.
 '''
 
 # namedtuple is not supported in python 2.4. 
-# download the 'Named tuples' python recipe from http://code.activestate.com/recipes/500261/
-# save the reciple as namedtuple.py and it should work. 
+# If not included in this project, download the 'Named tuples' python recipe from 
+# http://code.activestate.com/recipes/500261/
+# save the recipe as namedtuple24.py
+
 try:
     from collections import namedtuple
 except:
