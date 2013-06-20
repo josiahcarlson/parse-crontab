@@ -38,12 +38,12 @@ class TestCrontab(unittest.TestCase):
         n = datetime.datetime.utcfromtimestamp(ce.next(t945, delta=False))
         assert n == datetime.datetime(2013, 1, 1, 10, 0), n
         p = datetime.datetime.utcfromtimestamp(ce.previous(t945, delta=False))
-        assert p == datetime.datetime(2012, 12, 31, 15, 30)
+        assert p == datetime.datetime(2012, 12, 31, 15, 45), p
 
         n = datetime.datetime.utcfromtimestamp(ce.next(s1245, delta=False))
-        assert n == datetime.datetime(2013, 1, 7, 10, 0)
+        assert n == datetime.datetime(2013, 1, 7, 10, 0), n
         p = datetime.datetime.utcfromtimestamp(ce.previous(s1245, delta=False))
-        assert p == datetime.datetime(2013, 1, 4, 15, 45)
+        assert p == datetime.datetime(2013, 1, 4, 15, 45), p
 
     def test_normal(self):
         self._run_test('* * * * *', 60)
@@ -65,6 +65,11 @@ class TestCrontab(unittest.TestCase):
         self._run_test('0-6,50-59/2 * * * *', 900, datetime.datetime(2011, 1, 1, 1, 45))
         self._run_test('0-6,50-59/2 * * * *', 60, datetime.datetime(2011, 1, 1, 1, 55))
         self._run_test('0-6,50/2 * * * *', 60, datetime.datetime(2011, 1, 1, 1, 55))
+
+        self._run_test('10,20 15 * * *', 9*60, datetime.datetime(2011, 1, 1, 15, 1), min_delay=9*60)
+        self._run_test('10,20 15 * * *', 5*60, datetime.datetime(2011, 1, 1, 15, 15), min_delay=5*60)
+        self._run_test('10,20 15 * * *', 86400 - 600, datetime.datetime(2011, 1, 1, 15, 20), min_delay=86400 - 600)
+        self._run_test('* 2-5 * * *', 12525, datetime.datetime(2013, 6, 19, 22, 31, 15), min_delay=12525)
 
     def test_alternate(self):
         self._run_test('0 0 1 jan-dec *', 32 * 86400)

@@ -321,24 +321,24 @@ class CronTab(object):
         else:
             # we are going forwards
             _test = lambda: self.matchers.year < future.year
-        to_test = 0
-        while to_test < 6:
-            incr = increments[to_test]
-            ch = False
-            inc = None
-            while not self._test_match(to_test, future):
-                inc = incr(future, self.matchers)
+
+        # Start from the year and work our way down. Any time we increment a
+        # higher-magnitude value, we reset all lower-magnitude values. This
+        # gets us performance without sacrificing correctness. Still more
+        # complicated than a brute-force approach, but also orders of
+        # magnitude faster in basically all cases.
+        to_test = 5
+        while to_test >= 0:
+            if not self._test_match(to_test, future):
+                inc = increments[to_test](future, self.matchers)
                 future += inc
-                ch = True
+                for i in xrange(0, to_test):
+                    future = increments[6+i](future, inc)
                 if _test():
                     return None
-            if ch:
-                for i in xrange(0, to_test-1):
-                    future = increments[6+i](future, inc)
-                to_test = 0
+                to_test = 5
                 continue
-
-            to_test += 1
+            to_test -= 1
 
         # verify the match
         match = [self._test_match(i, future) for i in xrange(6)]
