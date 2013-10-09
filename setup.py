@@ -2,12 +2,15 @@
 
 from distutils.core import setup
 
-with open('README') as f:
-    long_description = f.read()
+try:
+    with open('README') as f:
+        long_description = f.read()
+except:
+    long_description = ''
 
 setup(
     name='crontab',
-    version='0.17',
+    version='0.18',
     description='Parse and use crontab schedules in Python',
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',
