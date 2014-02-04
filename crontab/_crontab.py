@@ -1,4 +1,3 @@
-
 '''
 crontab.py
 
@@ -10,7 +9,36 @@ Other licenses may be available upon request.
 
 '''
 
-from collections import namedtuple
+# namedtuple is not supported in python 2.4. 
+# If not included in this project, download the 'Named tuples' python recipe from 
+# http://code.activestate.com/recipes/500261/
+# save the recipe as namedtuple24.py
+
+try:
+    from collections import namedtuple
+except:
+    from namedtuple24 import namedtuple
+
+# define 'any'. It was introduced in python 2.5 
+try:
+    all
+except NameError:
+    def all(iterable): 
+        for i in iterable:
+            if not i: 
+                return False
+        return True
+
+# define 'all'. It was introduced in python 2.5 
+try:
+    any
+except NameError:
+    def any(s):
+        for v in s:
+            if v:
+                return True
+        return False
+
 import datetime
 import sys
 
@@ -82,6 +110,20 @@ def _year_incr(dt, m):
         return YEAR + DAY
     return YEAR
 
+# lambda dt,x: dt.replace(day=1) if x > DAY else dt,
+def _month_rollover(dt, x):
+    if x > DAY:
+        return dt.replace(day=1)
+    else:
+        return dt
+
+# lambda dt,x: dt.replace(month=1) if x > DAY else dt,
+def _year_rollover(dt, x):
+    if x > DAY:
+        return dt.replace(month=1)
+    else:
+        return dt
+
 _increments = [
     lambda *a: MINUTE,
     lambda *a: HOUR,
@@ -91,8 +133,8 @@ _increments = [
     _year_incr,
     lambda dt,x: dt.replace(minute=0),
     lambda dt,x: dt.replace(hour=0),
-    lambda dt,x: dt.replace(day=1) if x > DAY else dt,
-    lambda dt,x: dt.replace(month=1) if x > DAY else dt,
+    _month_rollover,
+    _year_rollover,
     lambda dt,x: dt,
 ]
 
@@ -129,6 +171,13 @@ def _day_decr_reset(dt, x):
         dt += DAY
     return dt - DAY
 
+# lambda dt,x: dt.replace(month=12)if x < -DAY else dt,
+def _year_rollunder(dt, x):
+    if x < -DAY:
+        return dt.replace(month=12)
+    else:
+        return dt
+
 _decrements = [
     lambda *a: -MINUTE,
     lambda *a: -HOUR,
@@ -139,7 +188,7 @@ _decrements = [
     lambda dt,x: dt.replace(minute=59),
     lambda dt,x: dt.replace(hour=23),
     _day_decr_reset,
-    lambda dt,x: dt.replace(month=12)if x < -DAY else dt,
+    _year_rollunder,
     lambda dt,x: dt,
 ]
 
