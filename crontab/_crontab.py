@@ -139,7 +139,7 @@ _decrements = [
     lambda dt,x: dt.replace(minute=59),
     lambda dt,x: dt.replace(hour=23),
     _day_decr_reset,
-    lambda dt,x: dt.replace(month=12)if x < -DAY else dt,
+    lambda dt,x: dt.replace(month=12) if x < -DAY else dt,
     lambda dt,x: dt,
 ]
 
@@ -318,6 +318,8 @@ class CronTab(object):
         if future < now:
             # we are going backwards...
             _test = lambda: future.year < self.matchers.year
+            if now.second or now.microsecond:
+                future = now.replace(second=0, microsecond=0)
         else:
             # we are going forwards
             _test = lambda: self.matchers.year < future.year

@@ -134,6 +134,17 @@ class TestCrontab(unittest.TestCase):
         self.assertRaises(ValueError, lambda: CronTab('L * * * *'))
         self.assertRaises(ValueError, lambda: CronTab('* 1, * * *'))
 
+    def test_previous(self):
+        schedule = CronTab('0 * * * *')
+        ts = datetime.datetime(2014, 6, 6, 9, 0, 0)
+        for i in range(70):
+            next = schedule.next(ts)
+            self.assertTrue(0 <= next <= 3600, next)
+            previous = schedule.previous(ts)
+            self.assertTrue(-3600 <= previous <= 0, previous)
+            ts += datetime.timedelta(seconds=1)
+
+
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestCrontab)
     unittest.TextTestRunner(verbosity=2).run(suite)
