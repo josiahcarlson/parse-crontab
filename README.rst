@@ -1,3 +1,9 @@
+
+Copyright 2011-2014 Josiah Carlson
+
+Released under the LGPL license version 2.1 and version 3 (you can choose
+which you'd like to be bound under).
+
 Description
 ===========
 

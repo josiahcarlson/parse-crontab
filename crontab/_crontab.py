@@ -3,8 +3,10 @@
 crontab.py
 
 Written July 15, 2011 by Josiah Carlson
-Released under the GNU LGPL v2.1
-available: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+Released under the GNU LGPL v2.1 and v3
+available:
+http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+http://www.gnu.org/licenses/lgpl.html
 
 Other licenses may be available upon request.
 
