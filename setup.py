@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from ez_setup import use_setuptools
+use_setuptools()
+
+from setuptools import setup
 
 try:
     with open('README') as f:
@@ -15,7 +18,8 @@ setup(
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',
     url='https://github.com/josiahcarlson/parse-crontab',
-    packages=['crontab', 'tests'],
+    packages=['crontab'],
+    test_suite="tests",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
