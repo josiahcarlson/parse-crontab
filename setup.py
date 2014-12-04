@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-from ez_setup import use_setuptools
-use_setuptools()
-
-from setuptools import setup
+from distutils.core import setup
 
 try:
     with open('README') as f:
@@ -13,13 +10,12 @@ except:
 
 setup(
     name='crontab',
-    version='0.20.1',
+    version='0.20.2',
     description='Parse and use crontab schedules in Python',
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',
     url='https://github.com/josiahcarlson/parse-crontab',
     packages=['crontab'],
-    test_suite="tests",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
