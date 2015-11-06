@@ -207,6 +207,9 @@ class _Matcher(object):
         def _parse_piece(it):
             if '-' in it:
                 start, end = map(_fix, it.split('-'))
+                # Allow "sat-sun"
+                if which == 4 and end == 0:
+                    end = 7
             elif it == '*':
                 start = _start
                 end = _end
