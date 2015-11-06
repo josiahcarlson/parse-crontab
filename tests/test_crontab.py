@@ -85,6 +85,9 @@ class TestCrontab(unittest.TestCase):
         self._run_test('0 0 ? 7 mon', 4*86400, datetime.datetime(2011, 7, 15))
         self._run_test('0 0 ? 7 mon', 366*86400, datetime.datetime(2011, 7, 25, 1))
         self._run_test('0 0 ? 8 mon-fri', 5*86400 + 1, datetime.datetime(2011, 7, 27, 1))
+        self._run_test('0 12 * * sat-sun', 129600, datetime.datetime(2015, 11, 6), 129600)
+        self._run_test('0 12 * * sat-sun', 86400, datetime.datetime(2015, 11, 7, 12), 86400)
+        self._run_test('0 12 * * sat-sun', 518400, datetime.datetime(2015, 11, 8, 12), 518400)
 
     def test_last_day(self):
         self._run_test('0 0 L 2 ?', 28*86400, datetime.datetime(2011, 1, 31))
