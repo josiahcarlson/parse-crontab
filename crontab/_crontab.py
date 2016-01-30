@@ -201,7 +201,11 @@ class _Matcher(object):
                     return _alternate[which][it]
             _assert(it.isdigit(),
                 "invalid range specifier: %r (%r)", it, entry)
-            return int(it, 10)
+            it = int(it, 10)
+            _assert(_start <= it <= _end_limit,
+                "item value %r out of range [%r, %r]",
+                it, _start, _end_limit)
+            return it
 
         # this handles individual items/ranges
         def _parse_piece(it):
