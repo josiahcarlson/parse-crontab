@@ -113,6 +113,14 @@ class TestCrontab(unittest.TestCase):
         self._run_test('0 0 ? 7 L0-1', 86400, datetime.datetime(2011, 7, 24))
         self._run_test('0 0 ? 7 L0-1', 6*86400, datetime.datetime(2011, 7, 25))
         self._run_test('59 23 L 12 *', 282*86400, datetime.datetime(2012, 3, 25), 280*84400)
+        self._run_test('0 0 ? 2 L1', 28*86400, datetime.datetime(2016, 2, 1), 28*86400)
+        self._run_test('0 0 ? 2 L0', 27*86400, datetime.datetime(2016, 2, 1), 27*86400)
+        self._run_test('0 0 ? 2 L7', 27*86400, datetime.datetime(2016, 2, 1), 27*86400)
+        self._run_test('0 0 ? 2 L6', 26*86400, datetime.datetime(2016, 2, 1), 26*86400)
+        self._run_test('0 0 ? 2 L5', 25*86400, datetime.datetime(2016, 2, 1), 25*86400)
+        self._run_test('0 0 ? 2 L4', 24*86400, datetime.datetime(2016, 2, 1), 24*86400)
+        self._run_test('0 0 ? 2 L3', 23*86400, datetime.datetime(2016, 2, 1), 23*86400)
+        self._run_test('0 0 ? 2 L2', 22*86400, datetime.datetime(2016, 2, 1), 22*86400)
 
     def test_impossible(self):
         self._run_impossible('0 0 * 7 fri 2011', datetime.datetime(2011, 7, 31))

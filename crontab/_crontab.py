@@ -162,6 +162,7 @@ class _Matcher(object):
         self.allowed = set()
         self.end = None
         self.any = '*' in self.split or '?' in self.split
+
         for it in self.split:
             al, en = self._parse_crontab(which, it)
             if al is not None:
@@ -170,23 +171,45 @@ class _Matcher(object):
         _assert(self.end is not None,
             "improper item specification: %r", entry.lower()
         )
+
     def __call__(self, v, dt):
-        if 'l' in self.split:
-            if v == _end_of_month(dt).day:
-                return True
-        elif any(x.startswith('l') for x in self.split):
-            okay = dt.month != (dt + WEEK).month
-            if okay and (self.any or v in self.allowed):
-                return True
+        for i, x in enumerate(self.split):
+            if x == 'l':
+                if v == _end_of_month(dt).day:
+                    return True
+
+            elif x.startswith('l'):
+                # We have to do this in here, otherwise we can end up, for
+                # example, accepting *any* Friday instead of the *last* Friday.
+                if dt.month == (dt + WEEK).month:
+                    continue
+
+                x = x[1:]
+                if x.isdigit():
+                    x = int(x) if x != '7' else 0
+                    if v == x:
+                        return True
+                    continue
+
+                start, end = map(int, x.partition('-')[::2])
+                allowed = set(range(start, end+1))
+                if 7 in allowed:
+                    allowed.add(0)
+                if v in allowed:
+                    return True
+
         return self.any or v in self.allowed
+
     def __lt__(self, other):
         if self.any:
             return self.end < other
         return all(item < other for item in self.allowed)
+
     def __gt__(self, other):
         if self.any:
             return _ranges[self.which][0] > other
         return all(item > other for item in self.allowed)
+
     def _parse_crontab(self, which, entry):
         '''
         This parses a single crontab field and returns the data necessary for
@@ -194,6 +217,7 @@ class _Matcher(object):
 
         See the README for information about what is accepted.
         '''
+
         # this handles day of week/month abbreviations
         def _fix(it):
             if which in _alternate and not it.isdigit():
@@ -222,6 +246,7 @@ class _Matcher(object):
                 end = _end
                 if increment is None:
                     return set([start])
+
             _assert(_start <= start <= _end_limit,
                 "range start value %r out of range [%r, %r]",
                 start, _start, _end_limit)
@@ -247,11 +272,15 @@ class _Matcher(object):
                 "you can only specify a bare 'L' in the 'day' field")
             return None, _end
 
-        # last day of the week
+        # for the last 'friday' of the month, for example
         elif entry.startswith('l'):
             _assert(which == 4,
                 "you can only specify a leading 'L' in the 'weekday' field")
-            entry = entry.lstrip('l')
+            es, _, ee = entry[1:].partition('-')
+            _assert((entry[1:].isdigit() and 0 <= int(es) <= 7) or
+                    (_ and es.isdigit() and ee.isdigit() and 0 <= int(es) <= 7 and 0 <= int(ee) <= 7),
+                "last <day> specifier must include a day number or range in the 'weekday' field, you entered %r", entry)
+            return None, _end
 
         increment = None
         # increments
@@ -266,10 +295,8 @@ class _Matcher(object):
         if which == 4:
             _end_limit = 7
 
-        # handle all of the a,b,c and x-y,a,b entries
-        good = set()
-        for it in entry.split(','):
-            good.update(_parse_piece(it))
+        # handle singles and ranges
+        good = _parse_piece(entry)
 
         # change Sunday to weekday 0
         if which == 4 and 7 in good:
@@ -290,10 +317,12 @@ class CronTab(object):
         crontab = _aliases.get(crontab, crontab)
         matchers = [_Matcher(which, entry)
                         for which, entry in enumerate(crontab.split())]
+
         if len(matchers) == 5:
             matchers.append(_Matcher(5, '*'))
         _assert(len(matchers) == 6,
             "improper number of cron entries specified")
+
         matchers = Matcher(*matchers)
         if not matchers.day.any:
             _assert(matchers.weekday.any,
