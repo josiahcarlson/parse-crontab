@@ -13,8 +13,9 @@ Other licenses may be available upon request.
 '''
 
 from collections import namedtuple
-import datetime
+from datetime import datetime, timedelta
 import sys
+import warnings
 
 _ranges = [
     (0, 59),
@@ -46,18 +47,31 @@ _aliases = {
     '@hourly':  '0 * * * *',
 }
 
+WARNING_CHANGE_MESSAGE = '''\
+Version 0.22.0+ of crontab will use datetime.utcnow() and
+datetime.utcfromtimestamp() instead of datetime.now() and
+datetime.fromtimestamp() as was previous. This had been a bug, which will be
+remedied. If you would like to keep the *old* behavior:
+`ct.next(..., default_utc=False)` . If you want to use the new behavior *now*:
+`ct.next(..., default_utc=True)`. If you pass a datetime object with a tzinfo
+attribute that is not None, timezones will *just work* to the best of their
+ability. There are tests...'''
+
+
 if sys.version_info >= (3, 0):
     _number_types = (int, float)
     xrange = range
 else:
     _number_types = (int, long, float)
 
-MINUTE = datetime.timedelta(minutes=1)
-HOUR = datetime.timedelta(hours=1)
-DAY = datetime.timedelta(days=1)
-WEEK = datetime.timedelta(days=7)
-MONTH = datetime.timedelta(days=28)
-YEAR = datetime.timedelta(days=365)
+MINUTE = timedelta(minutes=1)
+HOUR = timedelta(hours=1)
+DAY = timedelta(days=1)
+WEEK = timedelta(days=7)
+MONTH = timedelta(days=28)
+YEAR = timedelta(days=365)
+
+WARN_CHANGE = object()
 
 # find the next scheduled time
 def _end_of_month(dt):
@@ -305,6 +319,7 @@ class _Matcher(object):
 
         return good, _end
 
+
 class CronTab(object):
     __slots__ = 'matchers',
     def __init__(self, crontab):
@@ -343,15 +358,22 @@ class CronTab(object):
             attr = attr() % 7
         return self.matchers[index](attr, dt)
 
-    def next(self, now=None, increments=_increments, delta=True):
+    def next(self, now=None, increments=_increments, delta=True, default_utc=WARN_CHANGE):
         '''
         How long to wait in seconds before this crontab entry can next be
         executed.
         '''
-        now = now or datetime.datetime.now()
+        if default_utc is WARN_CHANGE and (isinstance(now, _number_types) or (now and not now.tzinfo)):
+            warnings.warn(WARNING_CHANGE_MESSAGE, FutureWarning, 2)
+            default_utc = False
+
+        now = now or (datetime.utcnow() if default_utc else datetime.now())
         if isinstance(now, _number_types):
-            now = datetime.datetime.fromtimestamp(now)
-        # get a reasonable future/past start time
+            now = datetime.utcfromtimestamp(now) if default_utc else datetime.fromtimestamp(now)
+
+        # handle timezones if the datetime object has a timezone and get a
+        # reasonable future/past start time
+        onow, now = now, now.replace(tzinfo=None)
         future = now.replace(second=0, microsecond=0) + increments[0]()
         if future < now:
             # we are going backwards...
@@ -387,17 +409,23 @@ class CronTab(object):
             "author with the following information:\n" \
             "crontab: %r\n" \
             "now: %r", ' '.join(m.input for m in self.matchers), now)
-        delay = future - now
+        if onow.tzinfo:
+            future = onow.tzinfo.localize(future)
+
+        delay = future - onow
         if not delta:
-            delay = future - datetime.datetime(1970, 1, 1)
+            begin = datetime(1970, 1, 1)
+            if onow.tzinfo:
+                begin = onow.tzinfo.localize(begin)
+            delay = future - begin
         return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
 
-    def previous(self, now=None, delta=True):
-        return self.next(now, _decrements, delta)
+    def previous(self, now=None, delta=True, default_utc=WARN_CHANGE):
+        return self.next(now, _decrements, delta, default_utc)
 
     def test(self, entry):
         if isinstance(entry, _number_types):
-            entry = datetime.datetime.utcfromtimestamp(entry)
+            entry = datetime.utcfromtimestamp(entry)
         for index in xrange(6):
             if not self._test_match(index, entry):
                 return False

@@ -1,20 +1,23 @@
+
 import datetime
 import unittest
+
+import pytz
 
 from crontab import CronTab
 
 class TestCrontab(unittest.TestCase):
     def _run_test(self, crontab, max_delay, now=None, min_delay=None):
         ct = CronTab(crontab)
-        now = now or datetime.datetime.now()
-        delay = ct.next(now)
+        now = now or datetime.datetime.utcnow()
+        delay = ct.next(now, default_utc=True)
         assert delay is not None
         dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
         assert delay <= max_delay, dd
         if min_delay is not None:
             assert delay >= min_delay, dd
         if not crontab.endswith(' 2099'):
-            delay2 = ct.previous(now + datetime.timedelta(seconds=delay))
+            delay2 = ct.previous(now + datetime.timedelta(seconds=delay), default_utc=True)
             dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
             assert abs(delay2) >= delay, (delay, delay2)
             pt = now + datetime.timedelta(seconds=delay) + datetime.timedelta(seconds=delay2)
@@ -22,7 +25,7 @@ class TestCrontab(unittest.TestCase):
 
     def _run_impossible(self, crontab, now):
         ct = CronTab(crontab)
-        delay = ct.next(now)
+        delay = ct.next(now, default_utc=True)
         assert delay is None, (crontab, delay, now, now+datetime.timedelta(seconds=delay))
 
     def test_closest(self):
@@ -35,14 +38,14 @@ class TestCrontab(unittest.TestCase):
         assert not ce.test(s1245)
         assert ce.test(t1245)
 
-        n = datetime.datetime.utcfromtimestamp(ce.next(t945, delta=False))
+        n = datetime.datetime.utcfromtimestamp(ce.next(t945, delta=False, default_utc=True))
         assert n == datetime.datetime(2013, 1, 1, 10, 0), n
-        p = datetime.datetime.utcfromtimestamp(ce.previous(t945, delta=False))
+        p = datetime.datetime.utcfromtimestamp(ce.previous(t945, delta=False, default_utc=True))
         assert p == datetime.datetime(2012, 12, 31, 15, 45), p
 
-        n = datetime.datetime.utcfromtimestamp(ce.next(s1245, delta=False))
+        n = datetime.datetime.utcfromtimestamp(ce.next(s1245, delta=False, default_utc=True))
         assert n == datetime.datetime(2013, 1, 7, 10, 0), n
-        p = datetime.datetime.utcfromtimestamp(ce.previous(s1245, delta=False))
+        p = datetime.datetime.utcfromtimestamp(ce.previous(s1245, delta=False, default_utc=True))
         assert p == datetime.datetime(2013, 1, 4, 15, 45), p
 
     def test_normal(self):
@@ -154,11 +157,19 @@ class TestCrontab(unittest.TestCase):
         schedule = CronTab('0 * * * *')
         ts = datetime.datetime(2014, 6, 6, 9, 0, 0)
         for i in range(70):
-            next = schedule.next(ts)
+            next = schedule.next(ts, default_utc=True)
             self.assertTrue(0 <= next <= 3600, next)
-            previous = schedule.previous(ts)
+            previous = schedule.previous(ts, default_utc=True)
             self.assertTrue(-3600 <= previous <= 0, previous)
             ts += datetime.timedelta(seconds=1)
+
+    def test_timezones(self):
+        s = CronTab('0 9 13 3 * 2016')
+
+        self.assertEquals(s.next(datetime.datetime(2016, 3, 13), default_utc=True), 32400)
+        self.assertEquals(s.next(pytz.utc.localize(datetime.datetime(2016, 3, 13)), default_utc=True), 32400)
+
+        self.assertEquals(s.next(pytz.timezone('US/Eastern').localize(datetime.datetime(2016, 3, 13))), 28800)
 
 
 def test():
