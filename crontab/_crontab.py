@@ -374,6 +374,7 @@ class CronTab(object):
         # handle timezones if the datetime object has a timezone and get a
         # reasonable future/past start time
         onow, now = now, now.replace(tzinfo=None)
+        tz = onow.tzinfo
         future = now.replace(second=0, microsecond=0) + increments[0]()
         if future < now:
             # we are going backwards...
@@ -409,15 +410,16 @@ class CronTab(object):
             "author with the following information:\n" \
             "crontab: %r\n" \
             "now: %r", ' '.join(m.input for m in self.matchers), now)
-        if onow.tzinfo:
-            future = onow.tzinfo.localize(future)
+        delay = future - now
+        if tz:
+            delay += tz.utcoffset(now)
+            delay -= tz.utcoffset(future)
 
-        delay = future - onow
         if not delta:
             begin = datetime(1970, 1, 1)
-            if onow.tzinfo:
-                begin = onow.tzinfo.localize(begin)
             delay = future - begin
+            if tz:
+                delay -= tz.utcoffset(future)
         return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
 
     def previous(self, now=None, delta=True, default_utc=WARN_CHANGE):

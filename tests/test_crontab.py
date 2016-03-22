@@ -172,9 +172,5 @@ class TestCrontab(unittest.TestCase):
         self.assertEquals(s.next(pytz.timezone('US/Eastern').localize(datetime.datetime(2016, 3, 13))), 28800)
 
 
-def test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestCrontab)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-
 if __name__ == '__main__':
-    test()
+    unittest.main()
