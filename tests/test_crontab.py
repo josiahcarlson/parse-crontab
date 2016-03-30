@@ -1,4 +1,5 @@
 
+from collections import namedtuple
 import datetime
 import unittest
 
@@ -6,19 +7,21 @@ import pytz
 
 from crontab import CronTab
 
+Results = namedtuple('Results', 'crontab delay max_delay now future')
+
 class TestCrontab(unittest.TestCase):
     def _run_test(self, crontab, max_delay, now=None, min_delay=None):
         ct = CronTab(crontab)
         now = now or datetime.datetime.utcnow()
         delay = ct.next(now, default_utc=True)
         assert delay is not None
-        dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
+        dd = Results(crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
         assert delay <= max_delay, dd
         if min_delay is not None:
             assert delay >= min_delay, dd
         if not crontab.endswith(' 2099'):
             delay2 = ct.previous(now + datetime.timedelta(seconds=delay), default_utc=True)
-            dd = (crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
+            dd = Results(crontab, delay, max_delay, now, now+datetime.timedelta(seconds=delay))
             assert abs(delay2) >= delay, (delay, delay2)
             pt = now + datetime.timedelta(seconds=delay) + datetime.timedelta(seconds=delay2)
             assert pt <= now, dd
@@ -91,6 +94,10 @@ class TestCrontab(unittest.TestCase):
         self._run_test('0 12 * * sat-sun', 129600, datetime.datetime(2015, 11, 6), 129600)
         self._run_test('0 12 * * sat-sun', 86400, datetime.datetime(2015, 11, 7, 12), 86400)
         self._run_test('0 12 * * sat-sun', 518400, datetime.datetime(2015, 11, 8, 12), 518400)
+        self._run_test('0 5 * * fri *', 7*86400, datetime.datetime(2016, 3, 25, 5), 7*86400)
+        self._run_test('* * * * Fri *', 6*86400+1, datetime.datetime(2016, 3, 25, 23, 59, 59), 6*86400+1)
+        self._run_test('* * * * Fri *', 60, datetime.datetime(2016, 3, 25, 23, 56), 60)
+        self._run_test('* * 13 * Fri *', 181*86400+1, datetime.datetime(2015, 11, 13, 23, 59, 59), 181*86400+1)
 
     def test_last_day(self):
         self._run_test('0 0 L 2 ?', 28*86400, datetime.datetime(2011, 1, 31))
@@ -166,10 +173,10 @@ class TestCrontab(unittest.TestCase):
     def test_timezones(self):
         s = CronTab('0 9 13 3 * 2016')
 
-        self.assertEquals(s.next(datetime.datetime(2016, 3, 13), default_utc=True), 32400)
-        self.assertEquals(s.next(pytz.utc.localize(datetime.datetime(2016, 3, 13)), default_utc=True), 32400)
+        self.assertEqual(s.next(datetime.datetime(2016, 3, 13), default_utc=True), 32400)
+        self.assertEqual(s.next(pytz.utc.localize(datetime.datetime(2016, 3, 13)), default_utc=True), 32400)
 
-        self.assertEquals(s.next(pytz.timezone('US/Eastern').localize(datetime.datetime(2016, 3, 13))), 28800)
+        self.assertEqual(s.next(pytz.timezone('US/Eastern').localize(datetime.datetime(2016, 3, 13))), 28800)
 
 
 if __name__ == '__main__':

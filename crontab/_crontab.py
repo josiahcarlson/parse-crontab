@@ -338,14 +338,7 @@ class CronTab(object):
         _assert(len(matchers) == 6,
             "improper number of cron entries specified")
 
-        matchers = Matcher(*matchers)
-        if not matchers.day.any:
-            _assert(matchers.weekday.any,
-                "missing a wildcard specifier for weekday")
-        if not matchers.weekday.any:
-            _assert(matchers.day.any,
-                "missing a wildcard specifier for day")
-        return matchers
+        return Matcher(*matchers)
 
     def _test_match(self, index, dt):
         '''

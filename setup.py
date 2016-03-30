@@ -10,7 +10,7 @@ except:
 
 setup(
     name='crontab',
-    version='0.21.2',
+    version='0.21.3',
     description='Parse and use crontab schedules in Python',
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',
