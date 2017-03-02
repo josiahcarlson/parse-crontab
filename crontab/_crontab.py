@@ -321,9 +321,18 @@ class _Matcher(object):
 
 
 class CronTab(object):
-    __slots__ = 'matchers',
+    __slots__ = 'matchers', '_crontab_command'
     def __init__(self, crontab):
         self.matchers = self._make_matchers(crontab)
+        self._crontab_command = crontab
+
+    def __str__(self):
+        return '<{}: {}>'.format(self.__class__.__name__, self._crontab_command)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self._crontab_command == other._crontab_command
+        return False
 
     def _make_matchers(self, crontab):
         '''

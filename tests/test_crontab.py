@@ -31,6 +31,10 @@ class TestCrontab(unittest.TestCase):
         delay = ct.next(now, default_utc=True)
         assert delay is None, (crontab, delay, now, now+datetime.timedelta(seconds=delay))
 
+    def test_equality(self):
+        s = '* * * * *'
+        assert CronTab(s) == CronTab(s)
+
     def test_closest(self):
         ce = CronTab("*/15 10-15 * * 1-5")
         t945 = datetime.datetime(2013, 1, 1, 9, 45) # tuesday
