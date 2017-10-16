@@ -52,6 +52,7 @@ class TestCrontab(unittest.TestCase):
         assert p == datetime.datetime(2013, 1, 4, 15, 45), p
 
     def test_normal(self):
+        self._run_test('*/5 * * * * * *', 5)
         self._run_test('* * * * *', 60)
         self._run_test('0 * * * *', 3600)
         self._run_test('0 0 * * *', 86400)
@@ -145,7 +146,7 @@ class TestCrontab(unittest.TestCase):
         self.assertRaises(ValueError, lambda: CronTab('* *'))
         self.assertRaises(ValueError, lambda: CronTab('* * *'))
         self.assertRaises(ValueError, lambda: CronTab('* * * *'))
-        self.assertRaises(ValueError, lambda: CronTab('* * * * * * *'))
+        self.assertRaises(ValueError, lambda: CronTab('* * * * * * * *'))
         self.assertRaises(ValueError, lambda: CronTab('-1 * * * *'))
         self.assertRaises(ValueError, lambda: CronTab('* mon-tue * * *'))
         self.assertRaises(ValueError, lambda: CronTab('* * * feb-jan *'))

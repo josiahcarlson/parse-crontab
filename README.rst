@@ -15,16 +15,24 @@ should next be executed.
 Comparing the below chart to http://en.wikipedia.org/wiki/Cron#CRON_expression
 you will note that W and # symbols are not supported.
 
-============= =========== ================= ===========================
-Field Name    Mandatory   Allowed Values    Allowed Special Characters
-============= =========== ================= ===========================
-Minutes       Yes         0-59              \* / , -
-Hours         Yes         0-23              \* / , -
-Day of month  Yes         1-31              \* / , - ? L
-Month         Yes         1-12 or JAN-DEC   \* / , -
-Day of week   Yes         0-6 or SUN-SAT    \* / , - ? L
-Year          No          1970-2099         \* / , -
-============= =========== ================= ===========================
+============= =========== ================= ============== ===========================
+Field Name    Mandatory   Allowed Values    Default Value  Allowed Special Characters
+============= =========== ================= ============== ===========================
+Seconds       No          0-59              0              \* / , -
+Minutes       Yes         0-59              N/A            \* / , -
+Hours         Yes         0-23              N/A            \* / , -
+Day of month  Yes         1-31              N/A            \* / , - ? L
+Month         Yes         1-12 or JAN-DEC   N/A            \* / , -
+Day of week   Yes         0-6 or SUN-SAT    N/A            \* / , - ? L
+Year          No          1970-2099         *              \* / , -
+============= =========== ================= ============== ===========================
+
+If your cron entry has 5 values, minutes-day of week are used, default seconds
+is and default year is appended. If your cron entry has 6 values, minutes-year
+are used, and default seconds are prepended.
+
+As such, only 5-7 value crontab entries are accepted (and mangled to 7 values,
+as necessary).
 
 
 Sample individual crontab fields

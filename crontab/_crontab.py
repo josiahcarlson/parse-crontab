@@ -19,13 +19,19 @@ import warnings
 
 _ranges = [
     (0, 59),
+    (0, 59),
     (0, 23),
     (1, 31),
     (1, 12),
     (0, 6),
     (1970, 2099),
 ]
+
+ENTRIES = len(_ranges)
+SECOND_OFFSET, MINUTE_OFFSET, HOUR_OFFSET, DAY_OFFSET, MONTH_OFFSET, WEEK_OFFSET, YEAR_OFFSET = range(ENTRIES)
+
 _attribute = [
+    'second',
     'minute',
     'hour',
     'day',
@@ -34,9 +40,10 @@ _attribute = [
     'year'
 ]
 _alternate = {
-    3: {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+    MONTH_OFFSET: {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
         'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov':11, 'dec':12},
-    4: {'sun': 0, 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6},
+    WEEK_OFFSET: {'sun': 0, 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5,
+        'sat': 6},
 }
 _aliases = {
     '@yearly':  '0 0 1 1 *',
@@ -64,6 +71,7 @@ if sys.version_info >= (3, 0):
 else:
     _number_types = (int, long, float)
 
+SECOND = timedelta(seconds=1)
 MINUTE = timedelta(minutes=1)
 HOUR = timedelta(hours=1)
 DAY = timedelta(days=1)
@@ -99,12 +107,14 @@ def _year_incr(dt, m):
     return YEAR
 
 _increments = [
+    lambda *a: SECOND,
     lambda *a: MINUTE,
     lambda *a: HOUR,
     lambda *a: DAY,
     _month_incr,
     lambda *a: DAY,
     _year_incr,
+    lambda dt,x: dt.replace(second=0),
     lambda dt,x: dt.replace(minute=0),
     lambda dt,x: dt.replace(hour=0),
     lambda dt,x: dt.replace(day=1) if x > DAY else dt,
@@ -146,20 +156,23 @@ def _day_decr_reset(dt, x):
     return dt - DAY
 
 _decrements = [
+    lambda *a: -SECOND,
     lambda *a: -MINUTE,
     lambda *a: -HOUR,
     _day_decr,
     _month_decr,
     lambda *a: -DAY,
     _year_decr,
+    lambda dt,x: dt.replace(second=59),
     lambda dt,x: dt.replace(minute=59),
     lambda dt,x: dt.replace(hour=23),
     _day_decr_reset,
     lambda dt,x: dt.replace(month=12) if x < -DAY else dt,
     lambda dt,x: dt,
+    _year_decr,
 ]
 
-Matcher = namedtuple('Matcher', 'minute, hour, day, month, weekday, year')
+Matcher = namedtuple('Matcher', 'second, minute, hour, day, month, weekday, year')
 
 def _assert(condition, message, *args):
     if not condition:
@@ -168,7 +181,7 @@ def _assert(condition, message, *args):
 class _Matcher(object):
     __slots__ = 'allowed', 'end', 'any', 'input', 'which', 'split'
     def __init__(self, which, entry):
-        _assert(0 <= which <= 5,
+        _assert(0 <= which <= YEAR_OFFSET,
             "improper number of cron entries specified")
         self.input = entry.lower()
         self.split = self.input.split(',')
@@ -185,6 +198,7 @@ class _Matcher(object):
         _assert(self.end is not None,
             "improper item specification: %r", entry.lower()
         )
+        self.allowed = frozenset(self.allowed)
 
     def __call__(self, v, dt):
         for i, x in enumerate(self.split):
@@ -224,6 +238,14 @@ class _Matcher(object):
             return _ranges[self.which][0] > other
         return all(item > other for item in self.allowed)
 
+    def __eq__(self, other):
+        if self.any:
+            return other.any
+        return self.allowed == other.allowed
+
+    def __hash__(self):
+        return hash((self.any, self.allowed))
+
     def _parse_crontab(self, which, entry):
         '''
         This parses a single crontab field and returns the data necessary for
@@ -250,7 +272,7 @@ class _Matcher(object):
             if '-' in it:
                 start, end = map(_fix, it.split('-'))
                 # Allow "sat-sun"
-                if which == 4 and end == 0:
+                if which in (DAY_OFFSET, WEEK_OFFSET) and end == 0:
                     end = 7
             elif it == '*':
                 start = _start
@@ -262,13 +284,14 @@ class _Matcher(object):
                     return set([start])
 
             _assert(_start <= start <= _end_limit,
-                "range start value %r out of range [%r, %r]",
-                start, _start, _end_limit)
+                "%s range start value %r out of range [%r, %r]",
+                _attribute[which], start, _start, _end_limit)
             _assert(_start <= end <= _end_limit,
-                "range end value %r out of range [%r, %r]",
-                end, _start, _end_limit)
+                "%s range end value %r out of range [%r, %r]",
+                _attribute[which], end, _start, _end_limit)
             _assert(start <= end,
-                "range start value %r > end value %r", start, end)
+                "%s range start value %r > end value %r",
+                _attribute[which], start, end)
             return set(range(start, end+1, increment or 1))
 
         _start, _end = _ranges[which]
@@ -276,19 +299,19 @@ class _Matcher(object):
         # wildcards
         if entry in ('*', '?'):
             if entry == '?':
-                _assert(which in (2, 4),
+                _assert(which in (DAY_OFFSET, WEEK_OFFSET),
                     "cannot use '?' in the %r field", _attribute[which])
             return None, _end
 
         # last day of the month
         if entry == 'l':
-            _assert(which == 2,
+            _assert(which == DAY_OFFSET,
                 "you can only specify a bare 'L' in the 'day' field")
             return None, _end
 
         # for the last 'friday' of the month, for example
         elif entry.startswith('l'):
-            _assert(which == 4,
+            _assert(which == WEEK_OFFSET,
                 "you can only specify a leading 'L' in the 'weekday' field")
             es, _, ee = entry[1:].partition('-')
             _assert((entry[1:].isdigit() and 0 <= int(es) <= 7) or
@@ -306,14 +329,14 @@ class _Matcher(object):
                 increment)
 
         # allow Sunday to be specified as weekday 7
-        if which == 4:
+        if which == WEEK_OFFSET:
             _end_limit = 7
 
         # handle singles and ranges
         good = _parse_piece(entry)
 
         # change Sunday to weekday 0
-        if which == 4 and 7 in good:
+        if which == WEEK_OFFSET and 7 in good:
             good.discard(7)
             good.add(0)
 
@@ -330,13 +353,16 @@ class CronTab(object):
         This constructs the full matcher struct.
         '''
         crontab = _aliases.get(crontab, crontab)
-        matchers = [_Matcher(which, entry)
-                        for which, entry in enumerate(crontab.split())]
+        ct = crontab.split()
+        if len(ct) == 5:
+            ct.insert(0, '0')
+            ct.append('*')
+        elif len(ct) == 6:
+            ct.insert(0, '0')
+        _assert(len(ct) == 7,
+            "improper number of cron entries specified; got %i need 5 to 7"%(len(ct,)))
 
-        if len(matchers) == 5:
-            matchers.append(_Matcher(5, '*'))
-        _assert(len(matchers) == 6,
-            "improper number of cron entries specified")
+        matchers = [_Matcher(which, entry) for which, entry in enumerate(ct)]
 
         return Matcher(*matchers)
 
@@ -347,7 +373,7 @@ class CronTab(object):
         '''
         at = _attribute[index]
         attr = getattr(dt, at)
-        if at == 'isoweekday':
+        if index == WEEK_OFFSET:
             attr = attr() % 7
         return self.matchers[index](attr, dt)
 
@@ -356,11 +382,11 @@ class CronTab(object):
         How long to wait in seconds before this crontab entry can next be
         executed.
         '''
-        if default_utc is WARN_CHANGE and (isinstance(now, _number_types) or (now and not now.tzinfo)):
+        if default_utc is WARN_CHANGE and (isinstance(now, _number_types) or (now and not now.tzinfo) or now is None):
             warnings.warn(WARNING_CHANGE_MESSAGE, FutureWarning, 2)
             default_utc = False
 
-        now = now or (datetime.utcnow() if default_utc else datetime.now())
+        now = now or (datetime.utcnow() if default_utc and default_utc is not WARN_CHANGE else datetime.now())
         if isinstance(now, _number_types):
             now = datetime.utcfromtimestamp(now) if default_utc else datetime.fromtimestamp(now)
 
@@ -368,12 +394,12 @@ class CronTab(object):
         # reasonable future/past start time
         onow, now = now, now.replace(tzinfo=None)
         tz = onow.tzinfo
-        future = now.replace(second=0, microsecond=0) + increments[0]()
+        future = now.replace(microsecond=0) + increments[0]()
         if future < now:
             # we are going backwards...
             _test = lambda: future.year < self.matchers.year
-            if now.second or now.microsecond:
-                future = now.replace(second=0, microsecond=0)
+            if now.microsecond:
+                future = now.replace(microsecond=0)
         else:
             # we are going forwards
             _test = lambda: self.matchers.year < future.year
@@ -383,21 +409,25 @@ class CronTab(object):
         # gets us performance without sacrificing correctness. Still more
         # complicated than a brute-force approach, but also orders of
         # magnitude faster in basically all cases.
-        to_test = 5
+        to_test = ENTRIES - 1
         while to_test >= 0:
             if not self._test_match(to_test, future):
                 inc = increments[to_test](future, self.matchers)
                 future += inc
                 for i in xrange(0, to_test):
-                    future = increments[6+i](future, inc)
-                if _test():
-                    return None
-                to_test = 5
+                    future = increments[ENTRIES+i](future, inc)
+                try:
+                    if _test():
+                        return None
+                except:
+                    print(future, type(future), type(inc))
+                    raise
+                to_test = ENTRIES-1
                 continue
             to_test -= 1
 
         # verify the match
-        match = [self._test_match(i, future) for i in xrange(6)]
+        match = [self._test_match(i, future) for i in xrange(ENTRIES)]
         _assert(all(match),
             "\nYou have discovered a bug with crontab, please notify the\n" \
             "author with the following information:\n" \
@@ -421,7 +451,7 @@ class CronTab(object):
     def test(self, entry):
         if isinstance(entry, _number_types):
             entry = datetime.utcfromtimestamp(entry)
-        for index in xrange(6):
+        for index in xrange(ENTRIES):
             if not self._test_match(index, entry):
                 return False
         return True
