@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 try:
-    with open('README') as f:
+    with open('README.rst') as f:
         long_description = f.read()
 except:
     long_description = ''
