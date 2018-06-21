@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 try:
-    with open('README') as f:
+    with open('README.rst') as f:
         long_description = f.read()
 except:
     long_description = ''
@@ -28,6 +28,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     license='GNU LGPL v2.1',
     long_description=long_description,
