@@ -3,6 +3,7 @@
 crontab.py
 
 Written July 15, 2011 by Josiah Carlson
+Copyright 2011-2018 Josiah Carlson
 Released under the GNU LGPL v2.1 and v3
 available:
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
@@ -433,16 +434,18 @@ class CronTab(object):
             "author with the following information:\n" \
             "crontab: %r\n" \
             "now: %r", ' '.join(m.input for m in self.matchers), now)
+
         delay = future - now
         if tz:
-            delay += tz.utcoffset(now)
-            delay -= tz.utcoffset(future)
+            delay += onow.utcoffset()
+            delay -= tz.localize(future).utcoffset()
 
         if not delta:
             begin = datetime(1970, 1, 1)
             delay = future - begin
             if tz:
-                delay -= tz.utcoffset(future)
+                delay -= tz.localize(future).utcoffset()
+
         return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
 
     def previous(self, now=None, delta=True, default_utc=WARN_CHANGE):

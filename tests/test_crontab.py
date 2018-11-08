@@ -179,6 +179,16 @@ class TestCrontab(unittest.TestCase):
 
         self.assertEqual(s.next(pytz.timezone('US/Eastern').localize(datetime.datetime(2016, 3, 13))), 28800)
 
+        t = CronTab('0 9 * * * 2018')
+        self.assertEqual(t.next(datetime.datetime(2018, 11, 4), default_utc=True), 32400)
+
+        timezone = pytz.timezone("America/Los_Angeles")
+        self.assertEqual(t.next(timezone.localize(datetime.datetime(2018, 11, 4))), 36000)
+        before = pytz.utc.localize(datetime.datetime(2018, 11, 4, 8, 29)).astimezone(timezone)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(before), 3660)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(timezone.localize(datetime.datetime(2018, 11, 4, 1, 15))), 900)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(timezone.localize(datetime.datetime(2018, 11, 4))), 9000)
+
 
 if __name__ == '__main__':
     unittest.main()
