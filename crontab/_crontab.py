@@ -435,16 +435,16 @@ class CronTab(object):
             "crontab: %r\n" \
             "now: %r", ' '.join(m.input for m in self.matchers), now)
 
+        if not delta:
+            onow = now = datetime(1970, 1, 1)
+
         delay = future - now
         if tz:
-            delay += onow.utcoffset()
-            delay -= tz.localize(future).utcoffset()
-
-        if not delta:
-            begin = datetime(1970, 1, 1)
-            delay = future - begin
-            if tz:
-                delay -= tz.localize(future).utcoffset()
+            delay += _fix_none(onow.utcoffset())
+            if hasattr(tz, 'localize'):
+                delay -= _fix_none(tz.localize(future).utcoffset())
+            else:
+                delay -= _fix_none(future.replace(tzinfo=tz).utcoffset())
 
         return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
 
@@ -458,3 +458,8 @@ class CronTab(object):
             if not self._test_match(index, entry):
                 return False
         return True
+
+def _fix_none(d, _=timedelta(0)):
+    if d is None:
+        return _
+    return d

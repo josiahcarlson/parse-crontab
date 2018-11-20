@@ -4,6 +4,7 @@ import datetime
 import unittest
 
 import pytz
+import dateutil.tz
 
 from crontab import CronTab
 
@@ -171,7 +172,7 @@ class TestCrontab(unittest.TestCase):
             self.assertTrue(-3600 <= previous <= 0, previous)
             ts += datetime.timedelta(seconds=1)
 
-    def test_timezones(self):
+    def test_timezones_pytz(self):
         s = CronTab('0 9 13 3 * 2016')
 
         self.assertEqual(s.next(datetime.datetime(2016, 3, 13), default_utc=True), 32400)
@@ -189,6 +190,27 @@ class TestCrontab(unittest.TestCase):
         self.assertEqual(CronTab('30 1 * * * 2018').next(timezone.localize(datetime.datetime(2018, 11, 4, 1, 15))), 900)
         self.assertEqual(CronTab('30 1 * * * 2018').next(timezone.localize(datetime.datetime(2018, 11, 4))), 9000)
 
+    def test_timezones_dateutil(self):
+        s = CronTab('0 9 13 3 * 2016')
+
+        self.assertEqual(s.next(datetime.datetime(2016, 3, 13), default_utc=True), 32400)
+        utc = dateutil.tz.tzutc()
+        self.assertEqual(s.next(datetime.datetime(2016, 3, 13, tzinfo=utc), default_utc=True), 32400)
+
+        x = datetime.datetime(2016, 3, 13, tzinfo=dateutil.tz.gettz('US/Eastern'))
+        self.assertEqual(s.next(x), 28800)
+
+        t = CronTab('0 9 * * * 2018')
+        self.assertEqual(t.next(datetime.datetime(2018, 11, 4), default_utc=True), 32400)
+
+        timezone = dateutil.tz.gettz("America/Los_Angeles")
+        self.assertEqual(t.next(datetime.datetime(2018, 11, 4, tzinfo=timezone)), 36000)
+        before = datetime.datetime(2018, 11, 4, 8, 29, tzinfo=utc).astimezone(timezone)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(before), 60)
+        before = datetime.datetime(2018, 11, 4, 8, 31, tzinfo=utc).astimezone(timezone)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(before), 89940)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(datetime.datetime(2018, 11, 4, 1, 15, tzinfo=timezone)), 900)
+        self.assertEqual(CronTab('30 1 * * * 2018').next(datetime.datetime(2018, 11, 4, tzinfo=timezone)), 5400)
 
 if __name__ == '__main__':
     unittest.main()
