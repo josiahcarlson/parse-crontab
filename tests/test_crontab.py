@@ -161,6 +161,11 @@ class TestCrontab(unittest.TestCase):
         self.assertRaises(ValueError, lambda: CronTab('* * 32 * *'))
         self.assertRaises(ValueError, lambda: CronTab('* * * 13 *'))
         self.assertRaises(ValueError, lambda: CronTab('* * * * 9999'))
+        self.assertRaises(ValueError, lambda: CronTab('20/50 * * * * *'))
+        self.assertRaises(ValueError, lambda: CronTab('0/100 * * * * *'))
+        self.assertRaises(ValueError, lambda: CronTab('*,50-59/12 * * * *'))
+        self.assertRaises(ValueError, lambda: CronTab('* * * DEC/7 * *'))
+        self.assertRaises(ValueError, lambda: CronTab('* * * * MON/7 *'))
 
     def test_previous(self):
         schedule = CronTab('0 * * * *')

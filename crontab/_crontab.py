@@ -293,6 +293,12 @@ class _Matcher(object):
             _assert(start <= end,
                 "%s range start value %r > end value %r",
                 _attribute[which], start, end)
+
+            if increment:
+                next_value = start + increment
+                _assert(next_value <= _end_limit,
+                        "the first next value %r out of range [%r, %r]",
+                        next_value, start, _end_limit)
             return set(range(start, end+1, increment or 1))
 
         _start, _end = _ranges[which]
@@ -320,6 +326,10 @@ class _Matcher(object):
                 "last <day> specifier must include a day number or range in the 'weekday' field, you entered %r", entry)
             return None, _end
 
+        # allow Sunday to be specified as weekday 7
+        if which == WEEK_OFFSET:
+            _end_limit = 7
+
         increment = None
         # increments
         if '/' in entry:
@@ -328,10 +338,11 @@ class _Matcher(object):
             _assert(increment > 0,
                 "you can only use positive increment values, you provided %r",
                 increment)
-
-        # allow Sunday to be specified as weekday 7
-        if which == WEEK_OFFSET:
-            _end_limit = 7
+            exceed_limit_error_msg_tpl = ("you can only use increment values "
+                                          "which less than or equal to the %r")
+            _assert(increment <= _end_limit,
+                    exceed_limit_error_msg_tpl,
+                    _end_limit)
 
         # handle singles and ranges
         good = _parse_piece(entry)
