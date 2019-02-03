@@ -297,7 +297,7 @@ class _Matcher(object):
             if increment:
                 next_value = start + increment
                 _assert(next_value <= _end_limit,
-                        "the first next value %r out of range [%r, %r]",
+                        "first next value %r is out of range [%r, %r]",
                         next_value, start, _end_limit)
             return set(range(start, end+1, increment or 1))
 
@@ -338,11 +338,9 @@ class _Matcher(object):
             _assert(increment > 0,
                 "you can only use positive increment values, you provided %r",
                 increment)
-            exceed_limit_error_msg_tpl = ("you can only use increment values "
-                                          "which less than or equal to the %r")
             _assert(increment <= _end_limit,
-                    exceed_limit_error_msg_tpl,
-                    _end_limit)
+                    "increment value must be less than %r, you provided %r",
+                    _end_limit, increment)
 
         # handle singles and ranges
         good = _parse_piece(entry)
