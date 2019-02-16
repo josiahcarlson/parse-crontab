@@ -60,6 +60,13 @@ For month::
     apr-jul
     mar-sep/3
 
+Installation
+============
+
+::
+
+    pip install crontab
+
 
 Example uses
 ============
