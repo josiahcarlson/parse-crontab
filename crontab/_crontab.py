@@ -86,7 +86,7 @@ WARN_CHANGE = object()
 def _end_of_month(dt):
     ndt = dt + DAY
     while dt.month == ndt.month:
-        dt += DAY
+        ndt += DAY
     return ndt.replace(day=1) - DAY
 
 def _month_incr(dt, m):
