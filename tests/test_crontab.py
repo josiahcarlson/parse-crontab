@@ -217,5 +217,13 @@ class TestCrontab(unittest.TestCase):
         self.assertEqual(CronTab('30 1 * * * 2018').next(datetime.datetime(2018, 11, 4, 1, 15, tzinfo=timezone)), 900)
         self.assertEqual(CronTab('30 1 * * * 2018').next(datetime.datetime(2018, 11, 4, tzinfo=timezone)), 5400)
 
+    def test_equal(self):
+        a = CronTab("3 * 5 6 *")
+        b = CronTab("3 * 5 6 *")
+        self.assertEqual(a, b)
+        a = CronTab("3 * 5 6 *", random_seconds=True)
+        b = CronTab("3 * 5 6 *")
+        self.assertNotEqual(a, b)
+
 if __name__ == '__main__':
     unittest.main()

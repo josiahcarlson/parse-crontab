@@ -15,6 +15,7 @@ Other licenses may be available upon request.
 
 from collections import namedtuple
 from datetime import datetime, timedelta
+import random
 import sys
 import warnings
 
@@ -180,11 +181,11 @@ def _assert(condition, message, *args):
         raise ValueError(message%args)
 
 class _Matcher(object):
-    __slots__ = 'allowed', 'end', 'any', 'input', 'which', 'split'
+    __slots__ = 'allowed', 'end', 'any', 'input', 'which', 'split', 'loop'
     def __init__(self, which, entry, loop=False):
         """
         input:
-            `which` - the name of the column
+            `which` - index into the increment / validation lookup tables
             `entry` - the value of the column
             `loop` - do we loop when we validate / construct counts
                      (turning 55-5,1 -> 0,1,2,3,4,5,55,56,57,58,59 in a "minutes" column)
@@ -197,6 +198,7 @@ class _Matcher(object):
         self.allowed = set()
         self.end = None
         self.any = '*' in self.split or '?' in self.split
+        self.loop = loop
 
         for it in self.split:
             al, en = self._parse_crontab(which, it)
@@ -367,22 +369,39 @@ class _Matcher(object):
         return good, _end
 
 
-class CronTab(object):
-    __slots__ = 'matchers',
-    def __init__(self, crontab, loop=False):
-        self.matchers = self._make_matchers(crontab, loop)
+_gv = lambda: str(random.randrange(60))
 
-    def _make_matchers(self, crontab, loop):
+
+class CronTab(object):
+    __slots__ = 'matchers', 'rs'
+    def __init__(self, crontab, loop=False, random_seconds=False):
+        """
+        inputs:
+            `crontab` - crontab specification of "[S=0] Mi H D Mo DOW [Y=*]"
+            `loop` - do we loop when we validate / construct counts
+                     (turning 55-5,1 -> 0,1,2,3,4,5,55,56,57,58,59 in a "minutes" column)
+            `jitter_seconds` - randomly select starting second for tasks
+        """
+        self.rs = random_seconds
+        self.matchers = self._make_matchers(crontab, loop, random_seconds)
+
+    def __eq__(self, other):
+        match_last = self.matchers[1:] == other.matchers[1:]
+        return match_last and ((self.rs and other.rs) or (not self.rs and
+            not other.rs and self.matchers[0] == other.matchers[0]))
+
+    def _make_matchers(self, crontab, loop, random_seconds):
         '''
         This constructs the full matcher struct.
         '''
         crontab = _aliases.get(crontab, crontab)
         ct = crontab.split()
+
         if len(ct) == 5:
-            ct.insert(0, '0')
+            ct.insert(0, _gv() if random_seconds else '0')
             ct.append('*')
         elif len(ct) == 6:
-            ct.insert(0, '0')
+            ct.insert(0, _gv() if random_seconds else '0')
         _assert(len(ct) == 7,
             "improper number of cron entries specified; got %i need 5 to 7"%(len(ct,)))
 
