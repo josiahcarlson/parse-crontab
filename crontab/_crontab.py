@@ -181,7 +181,14 @@ def _assert(condition, message, *args):
 
 class _Matcher(object):
     __slots__ = 'allowed', 'end', 'any', 'input', 'which', 'split'
-    def __init__(self, which, entry):
+    def __init__(self, which, entry, loop=False):
+        """
+        input:
+            `which` - the name of the column
+            `entry` - the value of the column
+            `loop` - do we loop when we validate / construct counts
+                     (turning 55-5,1 -> 0,1,2,3,4,5,55,56,57,58,59 in a "minutes" column)
+        """
         _assert(0 <= which <= YEAR_OFFSET,
             "improper number of cron entries specified")
         self.input = entry.lower()
@@ -290,16 +297,23 @@ class _Matcher(object):
             _assert(_start <= end <= _end_limit,
                 "%s range end value %r out of range [%r, %r]",
                 _attribute[which], end, _start, _end_limit)
-            _assert(start <= end,
-                "%s range start value %r > end value %r",
-                _attribute[which], start, end)
+            if not self.loop:
+                _assert(start <= end,
+                    "%s range start value %r > end value %r",
+                    _attribute[which], start, end)
 
-            if increment:
+            if increment and not self.loop:
                 next_value = start + increment
                 _assert(next_value <= _end_limit,
                         "first next value %r is out of range [%r, %r]",
                         next_value, start, _end_limit)
-            return set(range(start, end+1, increment or 1))
+
+            if start <= end:
+                return set(range(start, end+1, increment or 1))
+
+            right = set(range(end, _end_limit + 1, increment or 1))
+            first = max(right, default=end + (increment or 1)) % _end_limit
+            return set(range(first, start+1, increment or 1)) | right
 
         _start, _end = _ranges[which]
         _end_limit = _end
@@ -355,10 +369,10 @@ class _Matcher(object):
 
 class CronTab(object):
     __slots__ = 'matchers',
-    def __init__(self, crontab):
-        self.matchers = self._make_matchers(crontab)
+    def __init__(self, crontab, loop=False):
+        self.matchers = self._make_matchers(crontab, loop)
 
-    def _make_matchers(self, crontab):
+    def _make_matchers(self, crontab, loop):
         '''
         This constructs the full matcher struct.
         '''
@@ -372,7 +386,7 @@ class CronTab(object):
         _assert(len(ct) == 7,
             "improper number of cron entries specified; got %i need 5 to 7"%(len(ct,)))
 
-        matchers = [_Matcher(which, entry) for which, entry in enumerate(ct)]
+        matchers = [_Matcher(which, entry, loop) for which, entry in enumerate(ct)]
 
         return Matcher(*matchers)
 
