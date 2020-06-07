@@ -380,7 +380,7 @@ class CronTab(object):
             `crontab` - crontab specification of "[S=0] Mi H D Mo DOW [Y=*]"
             `loop` - do we loop when we validate / construct counts
                      (turning 55-5,1 -> 0,1,2,3,4,5,55,56,57,58,59 in a "minutes" column)
-            `jitter_seconds` - randomly select starting second for tasks
+            `random_seconds` - randomly select starting second for tasks
         """
         self.rs = random_seconds
         self.matchers = self._make_matchers(crontab, loop, random_seconds)
