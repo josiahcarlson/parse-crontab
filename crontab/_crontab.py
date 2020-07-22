@@ -3,7 +3,7 @@
 crontab.py
 
 Written July 15, 2011 by Josiah Carlson
-Copyright 2011-2018 Josiah Carlson
+Copyright 2011-2020 Josiah Carlson
 Released under the GNU LGPL v2.1 and v3
 available:
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
@@ -386,6 +386,8 @@ class CronTab(object):
         self.matchers = self._make_matchers(crontab, loop, random_seconds)
 
     def __eq__(self, other):
+        if not isinstance(other, CronTab):
+            return False
         match_last = self.matchers[1:] == other.matchers[1:]
         return match_last and ((self.rs and other.rs) or (not self.rs and
             not other.rs and self.matchers[0] == other.matchers[0]))
