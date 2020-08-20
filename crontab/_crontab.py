@@ -422,7 +422,7 @@ class CronTab(object):
             attr = attr() % 7
         return self.matchers[index](attr, dt)
 
-    def next(self, now=None, increments=_increments, delta=True, default_utc=WARN_CHANGE):
+    def next(self, now=None, increments=_increments, delta=True, default_utc=WARN_CHANGE, return_datetime=False):
         '''
         How long to wait in seconds before this crontab entry can next be
         executed.
@@ -478,6 +478,9 @@ class CronTab(object):
             "author with the following information:\n" \
             "crontab: %r\n" \
             "now: %r", ' '.join(m.input for m in self.matchers), now)
+
+        if return_datetime:
+            return future
 
         if not delta:
             onow = now = datetime(1970, 1, 1)
