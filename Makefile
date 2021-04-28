@@ -14,6 +14,9 @@ test:
 	python3.4 -m tests.test_crontab
 	python3.5 -m tests.test_crontab
 	python3.6 -m tests.test_crontab
+	python3.7 -m tests.test_crontab
+	python3.8 -m tests.test_crontab
+	python3.9 -m tests.test_crontab
 
 upload:
 	python3.6 setup.py sdist upload

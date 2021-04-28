@@ -10,7 +10,7 @@ except:
 
 setup(
     name='crontab',
-    version='0.22.9',
+    version='0.23.0',
     description='Parse and use crontab schedules in Python',
     author='Josiah Carlson',
     author_email='josiah.carlson@gmail.com',
@@ -29,6 +29,9 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     license='GNU LGPL v2.1',
     long_description=long_description,

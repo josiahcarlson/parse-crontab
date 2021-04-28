@@ -3,7 +3,7 @@
 crontab.py
 
 Written July 15, 2011 by Josiah Carlson
-Copyright 2011-2020 Josiah Carlson
+Copyright 2011-2021 Josiah Carlson
 Released under the GNU LGPL v2.1 and v3
 available:
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
