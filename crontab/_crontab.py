@@ -480,7 +480,7 @@ class CronTab(object):
             "now: %r", ' '.join(m.input for m in self.matchers), now)
 
         if return_datetime:
-            return future
+            return future.replace(tzinfo=tz)
 
         if not delta:
             onow = now = datetime(1970, 1, 1)
