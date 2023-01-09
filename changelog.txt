@@ -1,0 +1,3 @@
+# changes in version 1.0.0
+[added] this file, good to dcoument stuff
+[added] docker-compose and Docker files for different python runtimes

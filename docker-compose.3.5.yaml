@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  crontab-test-3-5:
+    build:
+      context: .
+      dockerfile: Dockerfile.3.5
+    environment:
+      PYTHONPATH: /app

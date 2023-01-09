@@ -1,0 +1,15 @@
+FROM python:3.3
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN python3.3 -m pip install -r requirements.txt
+
+# need crontab
+COPY crontab/*.py crontab/
+# and need the tests too
+COPY tests/* crontab_tests/
+
+# Note: needs access to Redis; assumes localhost:6879
+CMD ["python3.3", "-m", "crontab_tests.test_crontab"]
