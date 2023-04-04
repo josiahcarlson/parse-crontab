@@ -495,8 +495,8 @@ class CronTab(object):
 
         return delay.days * 86400 + delay.seconds + delay.microseconds / 1000000.
 
-    def previous(self, now=None, delta=True, default_utc=WARN_CHANGE):
-        return self.next(now, _decrements, delta, default_utc)
+    def previous(self, now=None, delta=True, default_utc=WARN_CHANGE, return_datetime=False):
+        return self.next(now, _decrements, delta, default_utc, return_datetime)
 
     def test(self, entry):
         if isinstance(entry, _number_types):
