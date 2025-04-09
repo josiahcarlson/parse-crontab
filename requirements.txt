@@ -1,2 +1,5 @@
+build
 python-dateutil
 pytz
+setuptools
+twine

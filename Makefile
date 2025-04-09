@@ -5,9 +5,7 @@ FILES=`ls docker-compose.*.yaml`
 # The sed removes extra spaces and colons
 # Which we pass into our rebuild
 GET_TARGET=grep crontab-test $${target} | sed 's/[ :]//g'
-GET_TARGET2=grep crontab-test docker-compose.$${target}.yaml | sed 's/[ :]//g'
-DASH_TO_DOTS=sed 's/[-]/\./g'
-COMPOSE_PREFIX=docker-compose -f docker-compose.
+GET_TARGET2=grep crontab-test-$${target} docker-compose.yaml | sed 's/[ :]//g'
 
 SHELL=/bin/bash
 # You can set these variables from the command line.
@@ -24,46 +22,34 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
 .PHONY: clean docs test
 
-default:
-	find . -type f | xargs chmod -x
+default: perms
+	find . -type f | sudo xargs chmod -x
 
-clean:
+perms:
+	-sudo chown ${USER}:${USER} -R .
+
+clean: default
 	-rm -f *.pyc crontab/*.pyc README.html MANIFEST
-	-rm -rf build dist
-
-install:
-	python setup.py install
-
+	-rm -rf build crontab.egg-info
 
 compose-build-all:
-	for target in ${FILES} ; do \
-		docker-compose -f $${target} build `${GET_TARGET}`; \
-	done
+	docker-compose build
 
 compose-build-%:
 	for target in $(patsubst compose-build-%,%,$@) ; do \
-		${COMPOSE_PREFIX}$${target}.yaml build `${GET_TARGET2}`; \
-	done
-
-compose-up-%:
-	for target in $(patsubst compose-up-%,%,$@) ; do \
-		${COMPOSE_PREFIX}$${target}.yaml up --remove-orphans `${GET_TARGET2}`; \
-	done
-
-compose-down-%:
-	for target in $(patsubst compose-down-%,%,$@) ; do \
-		${COMPOSE_PREFIX}$${target}.yaml down `${GET_TARGET2}`; \
+		docker-compose build `${GET_TARGET2}`; \
 	done
 
 testall:
-	make -j1 test-3.11 test-3.10 test-3.9 test-3.8 test-3.7 test-3.6 test-3.5 test-3.4 test-2.7
+	make -j1 test-3.13 test-3.12 test-3.11 test-3.10 test-3.9 test-3.8 test-3.7 test-3.6 test-3.5 test-3.4 test-2.7
 
 test-%:
 	# the test container runs the tests on up, then does an exit 0 when done
 	for target in $(patsubst test-%,%,$@) ; do \
-		make compose-build-$${target} && make compose-up-$${target}; \
+		docker-compose run --rm `${GET_TARGET2}` ; \
 	done
 
 upload:
-	python3.6 setup.py sdist upload
-
+	docker-compose run --rm -w /source crontab-test-uploader python3.13 -m build --sdist
+	docker-compose run --rm -w /source crontab-test-uploader python3.13 -m twine upload --skip-existing dist/*.tar.gz
+	make perms

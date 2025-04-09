@@ -1,0 +1,122 @@
+version: '3.3'
+services:
+  crontab-test-uploader:
+    build:
+      context: .
+      dockerfile: Dockerfile.upload
+      args:
+        PYTHON_VERSION: "3.13"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.13
+    volumes:
+      - ./:/source/:rw
+      - ~/.pypirc/:/root/.pypirc/:ro
+
+  crontab-test-3-13:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.13"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.13
+  crontab-test-3-12:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.12"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.12
+  crontab-test-3-11:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.11"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.11
+  crontab-test-3-10:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.10"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.10
+  crontab-test-3-9:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.9"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.9
+  crontab-test-3-8:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.8"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.8
+  crontab-test-3-7:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullseye
+      args:
+        PYTHON_VERSION: "3.7"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.7
+  crontab-test-3-6:
+    build:
+      context: .
+      dockerfile: Dockerfile.generic
+      args:
+        PYTHON_VERSION: "3.6"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.6
+  crontab-test-3-5:
+    build:
+      context: .
+      dockerfile: Dockerfile.generic
+      args:
+        PYTHON_VERSION: "3.5"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.5
+  crontab-test-3-4:
+    build:
+      context: .
+      dockerfile: Dockerfile.generic
+      args:
+        PYTHON_VERSION: "3.4"
+    environment:
+      PYTHONPATH: /app
+      PY: python3.4
+  # crontab-test-3-3:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.generic
+  #     args:
+  #       PYTHON_VERSION: "3.3"
+  #   environment:
+  #     PYTHONPATH: /app
+  crontab-test-2-7:
+    build:
+      context: .
+      dockerfile: Dockerfile.generic
+      args:
+        PYTHON_VERSION: "2.7"
+    environment:
+      PYTHONPATH: /app
+      PY: python2.7
