@@ -1,4 +1,12 @@
-# changes in verion 1.0.1
+# changes in version 1.0.5
+[added] the ability to use z0 as last day of the month, z1 for the day before
+  the last day of the month, up to z7 for 7 days before the last day of the
+  month. Closing feature request issue #46.
+
+# changes in 1.0.2, 1.0.3, 1.0.4
+[fixed] distutils -> setuptools
+
+# changes in version 1.0.1
 [added] merge PR #41
 
 # changes in version 1.0.0

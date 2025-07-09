@@ -21,7 +21,7 @@ Field Name    Mandatory   Allowed Values    Default Value  Allowed Special Chara
 Seconds       No          0-59              0              \* / , -
 Minutes       Yes         0-59              N/A            \* / , -
 Hours         Yes         0-23              N/A            \* / , -
-Day of month  Yes         1-31              N/A            \* / , - ? L
+Day of month  Yes         1-31              N/A            \* / , - ? L Z
 Month         Yes         1-12 or JAN-DEC   N/A            \* / , -
 Day of week   Yes         0-6 or SUN-SAT    N/A            \* / , - ? L
 Year          No          1970-2099         *              \* / , -
@@ -117,3 +117,8 @@ Example full crontab entries and their meanings::
     24 7 * * L5 -> 7:24 AM on the last friday of every month
     24 7 * * Lwed-fri ->
         7:24 AM on the last wednesday, thursday, and friday of every month
+    0 8 L * * -> 8 AM on the last day of the month, every month
+    0 8 Z0 * * -> 8 AM on the last day of the month, z0 is an alias for L
+    0 8 Z1 * * -> 8 AM 1 day before the last day of the month, every month
+    0 8 Z2 * * -> 8 AM 2 days before last day of the month, every month
+

@@ -225,5 +225,22 @@ class TestCrontab(unittest.TestCase):
         b = CronTab("3 * 5 6 *")
         self.assertNotEqual(a, b)
 
+    def test_last_days(self):
+        utc = dateutil.tz.tzutc()
+        a = CronTab("* * l * *")
+        b = CronTab("* * z0 * *")
+        c = CronTab("* * z1 * *")
+        d = CronTab("* * z7 * *")
+        e = CronTab("* * z0-7 * *")
+
+        a_day = datetime.datetime(2025, 7, 8, 0, 0, tzinfo=utc)
+        last = a.next(a_day)
+        self.assertEqual(last, b.next(a_day))
+        last = a_day + datetime.timedelta(seconds=last)
+        self.assertEqual(last.day - 1, (a_day + datetime.timedelta(seconds=c.next(a_day))).day)
+        self.assertEqual(last.day - 7, (a_day + datetime.timedelta(seconds=d.next(a_day))).day)
+        self.assertEqual(last.day - 7, (a_day + datetime.timedelta(seconds=e.next(a_day))).day)
+
+
 if __name__ == '__main__':
     unittest.main()

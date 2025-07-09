@@ -2,8 +2,8 @@
 '''
 crontab.py
 
-Written July 15, 2011 by Josiah Carlson
-Copyright 2011-2021 Josiah Carlson
+Originally written July 15, 2011 by Josiah Carlson <josiah.carlson@gmail.com>
+Copyright 2011-2025 Josiah Carlson
 Released under the GNU LGPL v2.1 and v3
 available:
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
@@ -224,16 +224,27 @@ class _Matcher(object):
 
                 x = x[1:]
                 if x.isdigit():
-                    x = int(x) if x != '7' else 0
+                    x = int(x, 10) if x != '7' else 0
                     if v == x:
                         return True
                     continue
 
-                start, end = map(int, x.partition('-')[::2])
+                start, end = (int(i, 10) for i in x.partition('-')[::2])
                 allowed = set(range(start, end+1))
                 if 7 in allowed:
                     allowed.add(0)
                 if v in allowed:
+                    return True
+
+            elif x.startswith('z'):
+                x = x[1:]
+                eom = _end_of_month(dt).day
+                if x.isdigit():
+                    x = int(x, 10)
+                    return (eom - x) == v
+
+                start, end = (int(i, 10) for i in x.partition('-')[::2])
+                if v in set(eom - i for i in range(start, end+1)):
                     return True
 
         return self.any or v in self.allowed
@@ -332,14 +343,24 @@ class _Matcher(object):
                 "you can only specify a bare 'L' in the 'day' field")
             return None, _end
 
+        # for the days before the last day of the month
+        elif entry.startswith('z'):
+            _assert(which == DAY_OFFSET,
+                "you can only specify a leading 'Z' in the 'day' field")
+            es, _, ee = entry[1:].partition('-')
+            _assert((entry[1:].isdigit() and 0 <= int(es, 10) <= 7) or
+                    (_ and es.isdigit() and ee.isdigit() and 0 <= int(es, 10) <= 7 and 1 <= int(ee, 10) <= 7 and es <= ee),
+                "<day> specifier must include a day number or range 0..7 in the 'day' field, you entered %r", entry)
+            return None, _end
+
         # for the last 'friday' of the month, for example
         elif entry.startswith('l'):
             _assert(which == WEEK_OFFSET,
                 "you can only specify a leading 'L' in the 'weekday' field")
             es, _, ee = entry[1:].partition('-')
-            _assert((entry[1:].isdigit() and 0 <= int(es) <= 7) or
-                    (_ and es.isdigit() and ee.isdigit() and 0 <= int(es) <= 7 and 0 <= int(ee) <= 7),
-                "last <day> specifier must include a day number or range in the 'weekday' field, you entered %r", entry)
+            _assert((entry[1:].isdigit() and 0 <= int(es, 10) <= 7) or
+                    (_ and es.isdigit() and ee.isdigit() and 0 <= int(es, 10) <= 7 and 0 <= int(ee, 10) <= 7),
+                "last <day> specifier must include a day number or range 0..7 in the 'weekday' field, you entered %r", entry)
             return None, _end
 
         # allow Sunday to be specified as weekday 7
