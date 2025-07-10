@@ -50,6 +50,6 @@ test-%:
 	done
 
 upload:
-	docker-compose run --rm -w /source crontab-test-uploader python3.13 -m build --sdist
-	docker-compose run --rm -w /source crontab-test-uploader python3.13 -m twine upload --skip-existing dist/*.tar.gz
+	docker-compose run --rm -w /source crontab-test-uploader python3.13 -m build
+	docker-compose run --rm -w /source crontab-test-uploader python3.13 -m twine upload --skip-existing dist/*
 	make perms
